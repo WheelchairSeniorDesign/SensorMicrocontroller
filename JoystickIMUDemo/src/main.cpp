@@ -4,21 +4,90 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
+#include <micro_ros_platformio.h>
+
+#include <rcl/rcl.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
+
+#include <std_msgs/msg/int32.h>
+
+// Micro ROS example at https://github.com/micro-ROS/micro_ros_platformio/blob/main/examples/micro-ros_publisher
+
+#if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
+#error This example is only avaliable for Arduino framework with serial transport.
+#endif
 
 Adafruit_ADS1115 adc;	// Construct an ads1115
 Adafruit_ICM20948 icm;
 uint16_t measurement_delay_us = 65535; // Delay between measurements for testing
-// For SPI mode, we need a CS pin
-#define ICM_CS 10
-// For software-SPI mode we need SCK/MOSI/MISO pins
-#define ICM_SCK 13
-#define ICM_MISO 12
-#define ICM_MOSI 11
+
+rcl_publisher_t publisher;
+std_msgs__msg__Int32 msg;
+
+rclc_executor_t executor;
+rclc_support_t support;
+rcl_allocator_t allocator;
+rcl_node_t node;
+rcl_timer_t timer;
+
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
+#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+
+// Error handle loop
+void error_loop() {
+    while(1) {
+        delay(100);
+    }
+}
+
+void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+        RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
+        msg.data++;
+    }
+}
 
 void setup(void) {
     Serial.begin(115200);
-    while (!Serial)
+    set_microros_serial_transports(Serial);
+    delay(2000);
+    while (!Serial) {
         delay(10); // will pause Zero, Leonardo, etc until serial console opens
+    }
+
+    allocator = rcl_get_default_allocator();
+
+    // Set the domain ID
+    const size_t domain_id = 1; // Replace with your desired domain ID
+
+    //create init_options
+    RCCHECK(rclc_support_init(&support, domain_id, NULL, &allocator));
+
+    // create node
+    RCCHECK(rclc_node_init_default(&node, "micro_ros_platformio_node", "", &support));
+
+    // create publisher
+    RCCHECK(rclc_publisher_init_default(
+            &publisher,
+            &node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+            "micro_ros_platformio_node_publisher"));
+
+    // create timer,
+    const unsigned int timer_timeout = 1000;
+    RCCHECK(rclc_timer_init_default(
+            &timer,
+            &support,
+            RCL_MS_TO_NS(timer_timeout),
+            timer_callback));
+
+    // create executor
+    RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer));
+
+    msg.data = 0;
 
     Serial.println("Adafruit ICM20948 test!");
 
@@ -168,8 +237,6 @@ void loop() {
     Serial.println();
     */
 
-    delay(100);
-
     adc0 = adc.readADC_SingleEnded(0);
     adc1 = adc.readADC_SingleEnded(1);
     adc2 = adc.readADC_SingleEnded(2);
@@ -179,7 +246,7 @@ void loop() {
     //Serial.print("AIN2: "); Serial.println(adc2);
     //Serial.print("AIN3: "); Serial.println(adc3);
     Serial.println();
-
+    RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)));
     delay(100);
 
 
