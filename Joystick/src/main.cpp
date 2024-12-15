@@ -49,3 +49,14 @@ void loop() {
     #endif
 
 }
+
+
+//Setup and loop functions for the second core
+void setup1() {
+    Serial.println("Hello from the second core!");
+    //TODO move all ROS communication over to second core so one is just collecting data and the other is just transmitting
+}
+
+void loop1() {
+    Serial.println("This is the second core loop!");
+}
