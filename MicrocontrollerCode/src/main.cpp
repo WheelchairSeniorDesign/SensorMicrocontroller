@@ -104,9 +104,13 @@ void loop() {
     //TODO might want to figure out how to put these on core1 so that they can run in parallel
     //uint32_t start = millis();
     RefSpeed omegaRef{};
+    RefDisplacement thetaRef{};
     if (!joystick_adc_error) {
         omegaRef = joystickToSpeed(joystickAdc);
+        thetaRef = joystickToDisplacement(joystickAdc);
     }
+
+    
 
 
     //uint32_t joystickTime = millis() - start;
@@ -147,7 +151,7 @@ void loop() {
 
     microRosTick();
 
-    transmitMsg(omegaRef, usDistances, pirSensors, fanSpeeds, imuData);
+    transmitMsg(thetaRef,omegaRef, usDistances, pirSensors, fanSpeeds, imuData);
 
     if (currentMillis - lastErrorTime >= error_timer) {
         lastErrorTime = currentMillis;
@@ -160,7 +164,7 @@ void loop() {
     #elif ROS_DEBUG
 
 
-    transmitMsg(omegaRef);
+    transmitMsg(thetaRef,omegaRef);
 
 
     #elif DEBUG

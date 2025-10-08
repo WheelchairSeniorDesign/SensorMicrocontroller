@@ -373,7 +373,9 @@ static void lidar_subscription_callback(const void *msgin){
     }
 
 #ifdef ROS
-void transmitMsg(RefSpeed omegaRef, USData ultrasonicData, PIRSensors pirSensors, FanSpeeds fanSpeeds, IMUData imuData) {
+void transmitMsg(RefDisplacement thetaRef, RefSpeed omegaRef, USData ultrasonicData, PIRSensors pirSensors, FanSpeeds fanSpeeds, IMUData imuData) {
+    sensorMsg.long_disp = thetaRef.longDisp;
+    sensorMsg.lat_disp = thetaRef.latDisp;
     sensorMsg.left_speed = omegaRef.leftSpeed;
     sensorMsg.right_speed = omegaRef.rightSpeed;
     sensorMsg.ultrasonic_front_0 = ultrasonicData.us_front_0;
@@ -406,9 +408,11 @@ void transmitMsg(RefSpeed omegaRef, USData ultrasonicData, PIRSensors pirSensors
 
 #elif ROS_DEBUG
 
-void transmitMsg(RefSpeed omegaRef){
+void transmitMsg(RefDisplacement thetaRef, RefSpeed omegaRef){
     msg.left_speed = omegaRef.leftSpeed;
     msg.right_speed = omegaRef.rightSpeed;
+    msg.long_disp = thetaRef.longDisp;
+    msg.lat_disp = thetaRef.latDisp;
 
     RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)));
 }

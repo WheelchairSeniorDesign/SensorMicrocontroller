@@ -16,11 +16,26 @@ struct RefSpeed {
 };
 
 /**
+ * Struct representing the reference displace
+ */
+struct RefDisplacement {
+    int8_t longDisp;      ///< Forward/Backward displacement with + indicating forward
+    int8_t latDisp;     ///< Side to side displacement with + indicating right
+};
+
+/**
  * Reads a value from the joystick connected to the ADC and returns the reference speeds
  * @param adc An instance of the adc the joystick is connected to
  * @return A RefSpeed for the wheelchair containing the wheel speeds and the direction
  */
 RefSpeed joystickToSpeed(Adafruit_ADS1115 &adc);
+
+/**
+ * Reads a value from the joystick connected to the ADC and returns the reference displacement
+ * @param adc An instance of the adc the joystick is connected to
+ * @return A RefDisplacement for the joystick
+ */
+RefDisplacement joystickToDisplacement(Adafruit_ADS1115 &adc);
 
 template <typename T>
 /**

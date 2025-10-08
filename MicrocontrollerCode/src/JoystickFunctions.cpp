@@ -9,6 +9,28 @@
 int diffParam = 30;
 int deadzoneParam = 30;
 
+RefDisplacement joystickToDisplacement(Adafruit_ADS1115 &adc){
+    int forwardJoystick = adc.readADC_SingleEnded(0); //a0 is forward/backward
+    int sidewaysJoystick = adc.readADC_SingleEnded(1); //a1 is left/right
+
+    RefDisplacement displacements;
+    /*
+     * Joystick middle values: ~8500
+     * a0 middle value: ~8500
+     * a1 middle value: ~8300
+     * a0 deadzone 10000 - 6500
+     * a1 deadzone 11000 - 6000
+     * Joystick Min: 0
+     * Joystick Max: 17390
+     * Output is a value -100 to 100 for the speed of the motor
+     */
+
+    //Converting the speeds so they start around 0 and then go positive and negative
+    displacements.longDisp = forwardJoystick - (8500+4400); //The second value is used to zero it out when the ADC gain is set to 0 instead of the default (2/3)
+    displacements.latDisp = sidewaysJoystick - (8400+4400);
+    return displacements;
+}
+
 RefSpeed joystickToSpeed(Adafruit_ADS1115 &adc){
     int forwardJoystick = adc.readADC_SingleEnded(0); //a0 is forward/backward
     int sidewaysJoystick = adc.readADC_SingleEnded(1); //a1 is left/right
